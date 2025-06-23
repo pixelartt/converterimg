@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Kompresi Gambar (JavaScript)</title>
+  <style>
+    body { font-family: sans-serif; text-align: center; margin-top: 50px; }
+    img { max-width: 90%; height: auto; margin: 10px 0; }
+    input, button { margin: 10px; padding: 10px; }
+  </style>
+</head>
+<body>
+  <h1>Kompresi Gambar (Lossy JPEG)</h1>
+
+  <input type="file" accept="image/*" id="upload">
+  <br>
+  <canvas id="canvas" style="display:none;"></canvas>
+  <img id="original" src="#" alt="Original" style="display:none;">
+  <img id="compressed" src="#" alt="Compressed" style="display:none;">
+  <br>
+  <button id="download" style="display:none;">Download Gambar Terkompres</button>
+
+  <script>
+    const upload = document.getElementById('upload');
+    const canvas = document.getElementById('canvas');
+    const original = document.getElementById('original');
+    const compressed = document.getElementById('compressed');
+    const downloadBtn = document.getElementById('download');
+
+    upload.onchange = function (e) {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function (event) {
+        const img = new Image();
+        img.onload = function () {
+          const ctx = canvas.getContext('2d');
+          canvas.width = img.width;
+          canvas.height = img.height;
+          ctx.drawImage(img, 0, 0);
+
+          // tampilkan gambar original
+          original.src = event.target.result;
+          original.style.display = 'block';
+
+          // kompres dengan kualitas rendah
+          canvas.toBlob(function (blob) {
+            const url = URL.createObjectURL(blob);
+            compressed.src = url;
+            compressed.style.display = 'block';
+            downloadBtn.href = url;
+            downloadBtn.download = 'terkompres.jpg';
+            downloadBtn.style.display = 'inline-block';
+          }, 'image/jpeg', 0.3); // kualitas 0.3 (30%)
+        };
+        img.src = event.target.result;
+      };
+      reader.readAsDataURL(file);
+    };
+  </script>
+</body>
+</html>
