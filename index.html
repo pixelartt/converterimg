@@ -1,62 +1,418 @@
 <!DOCTYPE html>
-<html>
+<html lang="id">
 <head>
-  <title>Kompresi Gambar (JavaScript)</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kompresi Gambar RLE</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
   <style>
-    body { font-family: sans-serif; text-align: center; margin-top: 50px; }
-    img { max-width: 90%; height: auto; margin: 10px 0; }
-    input, button { margin: 10px; padding: 10px; }
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: 'Inter', sans-serif;
+      background-color: #f8f9fb;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      width: 100%;
+      padding: 1rem 2rem;
+      background-color: white;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 2.00rem;
+      color: #ff0000;
+        
+    }
+
+ 
+
+    .info-panel {
+      display: none;
+      position: absolute;
+      top: 3.5rem;
+      right: 1.5rem;
+      background: #fff;
+      padding: 1rem;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      width: 240px;
+      z-index: 10;
+    }
+
+    .info-panel h4 {
+      margin: 0 0 0.5rem;
+    }
+
+    .info-panel p {
+      margin: 0;
+      font-size: 0.9rem;
+    }
+
+    .main {
+      flex: 1;
+      width: 100%;
+      padding: 2rem;
+      max-width: 1100px;
+      margin: auto;
+    }
+
+    .upload-box {
+      border: 2px dashed #e5e7eb;
+      padding: 2rem;
+      border-radius: 12px;
+      margin-bottom: 1rem;
+      background-color: #fafafa;
+      text-align: center;
+    }
+
+    .upload-box input[type="file"] {
+      display: none;
+    }
+
+    .upload-label {
+      display: inline-block;
+      background-color: #e63946;
+      color: white;
+      padding: 1rem 2rem;
+      font-size: 1rem;
+      font-weight: bold;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    .upload-label:hover {
+      background-color: #d62839;
+    }
+
+    .description {
+      text-align: center;
+      color: #4b5563;
+      margin-bottom: 1.5rem;
+    }
+
+    .mode-select {
+      text-align: center;
+      margin: 1rem 0;
+    }
+
+    .progress-bar {
+      height: 24px;
+      background-color: #e5e7eb;
+      border-radius: 6px;
+      overflow: hidden;
+      margin-top: 1.5rem;
+    }
+
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(to right, #06b6d4, #3b82f6);
+      transition: width 0.4s ease-in-out;
+    }
+
+    .info {
+      margin-top: 1rem;
+      color: #1f2937;
+      font-size: 0.95rem;
+      background: #f1f5f9;
+      padding: 1rem;
+      border-radius: 10px;
+      line-height: 1.6;
+    }
+
+    .images-preview {
+      display: flex;
+      justify-content: space-around;
+      gap: 1rem;
+      margin-top: 1.5rem;
+      flex-wrap: wrap;
+    }
+
+    .images-preview img {
+      max-width: 100%;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .btn-compress, .btn-download {
+      display: block;
+      margin: 1.5rem auto 0;
+      background-color: #3b82f6;
+      color: white;
+      font-weight: 600;
+      padding: 0.75rem 2rem;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      transition: background 0.3s;
+      text-decoration: none;
+    }
+      .info-panel a {
+  color: #3b82f6;
+  text-decoration: none;
+  font-size: 0.9rem;
+  display: inline-block;
+  margin: 4px 0;
+  transition: color 0.2s;
+}
+
+.info-panel a:hover {
+  color: #2563eb;
+  text-decoration: underline;
+}
+.social-link {
+  color: #333;
+  text-decoration: none;
+  font-size: 0.95rem;
+  display: inline-flex;
+  align-items: center;
+  margin: 0.25rem 0;
+  transition: color 0.2s;
+}
+
+.social-link:hover {
+  color: #2563eb;
+}
+
+
+    .btn-compress:hover {
+      background-color: #2563eb;
+    }
+
+    .btn-download {
+      background-color:  #2563eb;
+    }
+
+    .btn-download:hover {
+      background-color:  #2afbff;
+    }
+
+    @media (max-width: 768px) {
+      header h1 {
+        font-size: 1rem;
+      }
+
+      .upload-label {
+        padding: 0.75rem 1.5rem;
+        font-size: 0.95rem;
+      }
+
+      .btn-compress, .btn-download {
+        width: 100%;
+        max-width: 320px;
+      }
+    }
   </style>
 </head>
 <body>
-  <h1>Kompresi Gambar (Lossy JPEG)</h1>
+  <header>
+    <h1>Kompresi Gambar RLE</h1>
+    <div class="burger" onclick="toggleInfo()">
+      <div></div>
+      <div></div>
+      <div></div>
+    </div>
+    <div class="social-media">
+  <p style="margin-top: 0.50rem;"><strong>DEVELOPMENT INFO</strong></p>
+  <a href="https://github.com/pixelartt" target="_blank" class="social-link">
+    <svg height="20" width="20" viewBox="0 0 16 16" fill="currentColor" style="vertical-align: middle; margin-right: 6px;">
+      <path d="M8 0C3.58 0 0 3.58 0 8a8 8 0 005.47 7.59c.4.07.55-.17.55-.38v-1.35c-2.22.48-2.69-1.07-2.69-1.07a2.12 2.12 0 00-.88-1.15c-.72-.49.05-.48.05-.48a1.7 1.7 0 011.24.84 1.72 1.72 0 002.35.67c.02-.54.28-.87.5-1.07-1.77-.2-3.63-.89-3.63-3.95a3.1 3.1 0 01.83-2.15 2.88 2.88 0 01.08-2.12s.67-.22 2.2.82a7.5 7.5 0 014 0c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12a3.1 3.1 0 01.83 2.15c0 3.07-1.87 3.74-3.65 3.94.29.25.54.73.54 1.48v2.2c0 .21.15.46.55.38A8.01 8.01 0 0016 8c0-4.42-3.58-8-8-8z"></path>
+    </svg>
+    GitHub
+  </a>
+</div>
+    <div class="info-panel" id="infoPanel">
+  <h4>👨‍💻 Tentang Developer</h4>
+  <p>Dikembangkan oleh Tim Kompresi RLE. Versi 1.0</p>
+  <p><strong>Bantuan:</strong> Klik tombol "Kompres Sekarang" setelah mengunggah gambar.</p>
 
-  <input type="file" accept="image/*" id="upload">
-  <br>
+  <div class="social-media">
+    <p style="margin-top: 1rem;"><strong>Ikuti kami:</strong></p>
+    <a href="https://github.com/developer" target="_blank">🐙 GitHub</a><br>
+    <a href="https://instagram.com/developer" target="_blank">📸 Instagram</a><br>
+    <a href="https://linkedin.com/in/developer" target="_blank">💼 LinkedIn</a>
+  </div>
+</div>
+    <div class="info-panel" id="infoPanel">
+      <h4>👨‍💻 Tentang Developer</h4>
+      <p>Dikembangkan oleh Tim Kompresi RLE. Versi 1.0</p>
+      <p><strong>Bantuan:</strong> Klik tombol "Kompres Sekarang" setelah mengunggah gambar.</p>
+    </div>
+  </header>
+
+  <div class="main">
+    <p class="description">Kompres gambar Anda secara efisien dalam hitungan detik. Unggah atau tarik gambar ke bawah ini.</p>
+
+    <div class="upload-box" onclick="document.getElementById('upload').click()">
+      <label for="upload" class="upload-label">⬆ Pilih Gambar untuk Kompresi</label>
+      <input type="file" id="upload" accept="image/*">
+      <p style="color:#6b7280;margin-top:1rem;">atau tarik dan jatuhkan gambar di sini</p>
+    </div>
+
+    <div class="mode-select">
+      <label style="margin-right: 1rem;">
+        <input type="radio" name="mode" value="lossless" checked> Lossless
+      </label>
+      <label>
+        <input type="radio" name="mode" value="lossy"> Lossy
+      </label>
+    </div>
+
+    <button class="btn-compress" onclick="compressImage()">Kompres Sekarang</button>
+
+    <div id="previewArea" style="display:none;">
+      <div class="progress-bar">
+        <div class="progress-fill" id="progressFill"></div>
+      </div>
+      <div class="info" id="infoText">Menunggu kompresi...</div>
+
+      <div class="images-preview">
+        <div>
+          <img id="original" alt="Gambar Asli" width="300">
+          <p>Gambar Asli</p>
+        </div>
+        <div>
+          <img id="output" alt="Hasil Kompresi" width="300">
+          <p>Hasil Kompresi</p>
+        </div>
+      </div>
+
+      <a id="download" class="btn-download" href="#" download="hasil.png">⬇Download Hasil</a>
+    </div>
+  </div>
+
   <canvas id="canvas" style="display:none;"></canvas>
-  <img id="original" src="#" alt="Original" style="display:none;">
-  <img id="compressed" src="#" alt="Compressed" style="display:none;">
-  <br>
-  <button id="download" style="display:none;">Download Gambar Terkompres</button>
 
   <script>
+    function toggleInfo() {
+      const panel = document.getElementById('infoPanel');
+      panel.style.display = panel.style.display === 'block' ? 'none' : 'block';
+    }
+
     const upload = document.getElementById('upload');
     const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
     const original = document.getElementById('original');
-    const compressed = document.getElementById('compressed');
-    const downloadBtn = document.getElementById('download');
+    const output = document.getElementById('output');
+    const infoText = document.getElementById('infoText');
+    const progressFill = document.getElementById('progressFill');
+    const downloadLink = document.getElementById('download');
+    const previewArea = document.getElementById('previewArea');
+    let imageData = null;
 
-    upload.onchange = function (e) {
+    upload.addEventListener('change', (e) => {
       const file = e.target.files[0];
-      if (!file) return;
-
       const reader = new FileReader();
       reader.onload = function (event) {
         const img = new Image();
         img.onload = function () {
-          const ctx = canvas.getContext('2d');
           canvas.width = img.width;
           canvas.height = img.height;
           ctx.drawImage(img, 0, 0);
-
-          // tampilkan gambar original
-          original.src = event.target.result;
-          original.style.display = 'block';
-
-          // kompres dengan kualitas rendah
-          canvas.toBlob(function (blob) {
-            const url = URL.createObjectURL(blob);
-            compressed.src = url;
-            compressed.style.display = 'block';
-            downloadBtn.href = url;
-            downloadBtn.download = 'terkompres.jpg';
-            downloadBtn.style.display = 'inline-block';
-          }, 'image/jpeg', 0.3); // kualitas 0.3 (30%)
+          imageData = ctx.getImageData(0, 0, img.width, img.height);
+          original.src = canvas.toDataURL("image/png");
+          previewArea.style.display = 'block';
         };
         img.src = event.target.result;
       };
       reader.readAsDataURL(file);
-    };
+    });
+
+    async function compressImage() {
+      if (!imageData) return alert("Silakan unggah gambar terlebih dahulu.");
+      const mode = document.querySelector('input[name="mode"]:checked').value;
+      const factor = (mode === 'lossy') ? 8 : 1;
+
+      infoText.textContent = "Mengompresi...";
+      progressFill.style.width = `0%`;
+
+      let data = new Uint8ClampedArray(imageData.data);
+      let step = 0;
+
+      for (let i = 0; i < data.length; i += 4) {
+        if (factor > 1) {
+          data[i] = Math.floor(data[i] / factor) * factor;
+          data[i + 1] = Math.floor(data[i + 1] / factor) * factor;
+          data[i + 2] = Math.floor(data[i + 2] / factor) * factor;
+        }
+        step++;
+        if (step % 10000 === 0) {
+          let percent = Math.min(100, Math.floor((i / data.length) * 100));
+          progressFill.style.width = percent + '%';
+          infoText.textContent = `Mengompresi... ${percent}%`;
+          await new Promise(resolve => setTimeout(resolve, 10));
+        }
+      }
+
+      const encoded = rleEncode(data);
+      const decoded = rleDecode(encoded, imageData.width, imageData.height);
+      ctx.putImageData(decoded, 0, 0);
+      const result = canvas.toDataURL("image/png");
+      output.src = result;
+      downloadLink.href = result;
+
+      const originalSize = imageData.data.length;
+      const compressedSize = JSON.stringify(encoded).length;
+      const ratio = (compressedSize / originalSize).toFixed(2);
+
+      infoText.innerHTML = `
+        Mode: <strong>${mode.toUpperCase()}</strong><br>
+        Ukuran Asli: <strong>${(originalSize / 1024).toFixed(2)} KB</strong><br>
+        Setelah Kompresi: <strong>${(compressedSize / 1024).toFixed(2)} KB</strong><br>
+        Rasio Kompresi: <strong>${ratio}</strong>
+      `;
+
+      progressFill.style.width = '100%';
+    }
+
+    function rleEncode(data) {
+      let encoded = [];
+      for (let i = 0; i < data.length; i += 4) {
+        let count = 1;
+        while (
+          i + 4 * count < data.length &&
+          data[i] === data[i + 4 * count] &&
+          data[i + 1] === data[i + 4 * count + 1] &&
+          data[i + 2] === data[i + 4 * count + 2] &&
+          data[i + 3] === data[i + 4 * count + 3]
+        ) {
+          count++;
+        }
+        encoded.push({ r: data[i], g: data[i+1], b: data[i+2], a: data[i+3], count });
+        i += 4 * (count - 1);
+      }
+      return encoded;
+    }
+
+    function rleDecode(encoded, width, height) {
+      let decoded = new Uint8ClampedArray(width * height * 4);
+      let i = 0;
+      for (const pixel of encoded) {
+        for (let j = 0; j < pixel.count; j++) {
+          decoded[i++] = pixel.r;
+          decoded[i++] = pixel.g;
+          decoded[i++] = pixel.b;
+          decoded[i++] = pixel.a;
+        }
+      }
+      return new ImageData(decoded, width, height);
+    }
   </script>
 </body>
 </html>
